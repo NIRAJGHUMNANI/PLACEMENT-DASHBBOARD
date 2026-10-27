@@ -1,0 +1,93 @@
+@model PlacementDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var rate = Model.TotalStudents == 0 ? 0 : (int)Math.Round(100.0 * Model.PlacedStudents / Model.TotalStudents);
+}
+<section class="heading">
+  <div><span class="eyebrow">PLACEMENT ANALYTICS</span><h1>Placement Dashboard</h1><p>Student outcomes, company activity and placement report.</p></div>
+  <a class="btn" asp-action="Report" asp-route-status="@Model.StatusFilter" target="_blank">Open Report / Save PDF ↗</a>
+</section>
+
+<section class="cards">
+  <article class="metric"><span>Total Students</span><strong>@Model.TotalStudents</strong><small>Registered students</small></article>
+  <article class="metric">
+    <span>Students Placed</span><strong>@Model.PlacedStudents</strong><small>@rate% placement rate</small>
+    <div class="bar" title="@rate% placed"><i style="width:@(rate)%"></i></div>
+  </article>
+  <article class="metric"><span>Companies</span><strong>@Model.TotalCompanies</strong><small>Participating companies</small></article>
+  <article class="metric"><span>Average Package</span><strong>₹@Model.AveragePackage.ToString("0.00")</strong><small>LPA · placed students</small></article>
+</section>
+
+<section class="panel">
+  <div class="panelhead">
+    <div><h2>Placement Records</h2><p class="muted">Search instantly, filter by status, or export the records as CSV.</p></div>
+    <div class="filters">
+      <input id="searchBox" class="search" type="search" placeholder="Search name, company, role…" aria-label="Search placement records" autocomplete="off" />
+      <form method="get" asp-action="Index" class="filters">
+        <select name="status" aria-label="Filter by placement status">
+          <option value="All" selected="@(Model.StatusFilter == "All")">All statuses</option>
+          <option value="Placed" selected="@(Model.StatusFilter == "Placed")">Placed</option>
+          <option value="In Process" selected="@(Model.StatusFilter == "In Process")">In Process</option>
+          <option value="Not Placed" selected="@(Model.StatusFilter == "Not Placed")">Not Placed</option>
+        </select>
+        <button class="btn" type="submit">Apply Filter</button>
+      </form>
+      <a class="btn ghost" asp-action="ExportCsv" asp-route-status="@Model.StatusFilter">⬇ Export CSV</a>
+    </div>
+  </div>
+  <div class="tablewrap">
+    <table id="recordsTable">
+      <thead><tr><th>Enrollment No.</th><th>Student Name</th><th>Department</th><th>Company</th><th>Job Role</th><th>Package (LPA)</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+      @foreach (var p in Model.Placements)
+      {
+        <tr class="data-row"><td class="code">@p.EnrollmentNo</td><td class="student">@p.StudentName</td><td>@p.Department</td><td>@p.CompanyName</td><td>@p.JobRole</td><td>₹@p.PackageLPA.ToString("0.00")</td><td><span class="status @(p.PlacementStatus == "Placed" ? "placed" : p.PlacementStatus == "In Process" ? "process" : "notplaced")">@p.PlacementStatus</span></td><td>@(p.PlacementDate?.ToString("dd MMM yyyy") ?? "—")</td></tr>
+      }
+      @if (!Model.Placements.Any())
+      {
+        <tr><td colspan="8" class="empty">No placement records found for this filter.</td></tr>
+      }
+        <tr id="noMatchRow" style="display:none"><td colspan="8" class="empty">No records match your search.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tablefoot">Showing <b id="shownCount">@Model.Placements.Count</b> of @Model.Placements.Count record(s)</div>
+</section>
+
+<section class="panel">
+  <div class="panelhead"><div><h2>Company-wise Placement Count</h2><p class="muted">Number of students placed at each company.</p></div></div>
+  <div class="tablewrap">
+    <table class="companytable">
+      <thead><tr><th>Company</th><th>Job Role</th><th>Students Placed</th></tr></thead>
+      <tbody>
+      @foreach (var c in Model.Companies)
+      {
+        <tr><td class="student">@c.CompanyName</td><td>@c.JobRole</td><td><span class="count">@c.PlacedCount</span></td></tr>
+      }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+(function () {
+  var box = document.getElementById('searchBox');
+  var table = document.getElementById('recordsTable');
+  if (!box || !table) return;
+  var rows = Array.prototype.slice.call(table.tBodies[0].querySelectorAll('tr.data-row'));
+  var shown = document.getElementById('shownCount');
+  var none = document.getElementById('noMatchRow');
+  function apply() {
+    var q = box.value.trim().toLowerCase();
+    var n = 0;
+    rows.forEach(function (r) {
+      var match = !q || r.textContent.toLowerCase().indexOf(q) !== -1;
+      r.style.display = match ? '' : 'none';
+      if (match) n++;
+    });
+    shown.textContent = n;
+    none.style.display = (rows.length > 0 && n === 0) ? '' : 'none';
+  }
+  box.addEventListener('input', apply);
+})();
+</script>

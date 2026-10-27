@@ -1,0 +1,52 @@
+@model PlacementDashboardViewModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Placement Report</title>
+  <link rel="stylesheet" href="~/css/report.css" />
+</head>
+<body>
+<div class="sheet">
+  <div class="actions"><button onclick="window.print()">Print / Save as PDF</button><button class="secondary" onclick="window.close()">Close Report</button></div>
+  <div class="brand">PLACEMENT ANALYTICS · .NET TECHNOLOGIES</div>
+  <h1>Placement Report</h1>
+  <p class="subtitle">Generated on @DateTime.Now.ToString("dd MMM yyyy, hh:mm tt") · Status filter: @Model.StatusFilter</p>
+  <div class="summary">
+    <div><span>Total Students</span><b>@Model.TotalStudents</b></div>
+    <div><span>Students Placed</span><b>@Model.PlacedStudents</b></div>
+    <div><span>Companies</span><b>@Model.TotalCompanies</b></div>
+    <div><span>Average Package (LPA)</span><b>₹@Model.AveragePackage.ToString("0.00")</b></div>
+  </div>
+  <h2>Placement Records (@Model.StatusFilter)</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Enrollment No.</th><th>Student</th><th>Department</th><th>Company</th><th>Role</th><th>Package LPA</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+      @foreach (var p in Model.Placements)
+      {
+        <tr><td>@p.EnrollmentNo</td><td>@p.StudentName</td><td>@p.Department</td><td>@p.CompanyName</td><td>@p.JobRole</td><td>₹@p.PackageLPA.ToString("0.00")</td><td>@p.PlacementStatus</td><td>@(p.PlacementDate?.ToString("dd MMM yyyy") ?? "—")</td></tr>
+      }
+      @if (!Model.Placements.Any())
+      {
+        <tr><td colspan="8">No records found.</td></tr>
+      }
+      </tbody>
+    </table>
+  </div>
+  <h2>Company-wise Placement Count</h2>
+  <table>
+    <thead><tr><th>Company</th><th>Role</th><th>Students Placed</th></tr></thead>
+    <tbody>
+    @foreach (var c in Model.Companies)
+    {
+      <tr><td>@c.CompanyName</td><td>@c.JobRole</td><td>@c.PlacedCount</td></tr>
+    }
+    </tbody>
+  </table>
+  <div class="footer">Placement Dashboard · Report generated from PlacementDB</div>
+</div>
+</body>
+</html>
